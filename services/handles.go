@@ -2,8 +2,8 @@ package services
 
 import (
 	"encoding/csv"
+	l4g "github.com/alecthomas/log4go"
 	"io"
-	"log"
 	"os"
 	"paper/quote-client/utils"
 	"strconv"
@@ -12,7 +12,7 @@ import (
 
 // 按照输入数字，作为每分钟请求数，向服务器发请求
 const (
-	URL = "http://"
+	URL = "http://0.0.0.0:8000"
 )
 
 func SendRequestPerMin(reqs int) {
@@ -24,12 +24,12 @@ func SendRequestPerMin(reqs int) {
 			break
 		}
 		go SendRequestOneTime(URL, reqs/60)
-		time.Sleep(10 * time.Second)
+		time.Sleep(1 * time.Second)
 	}
 }
 
 func SendRequestOneTime(url string, reqs int) {
-	for i := 0; i < reqs; i++ {
+	for i := 0; i < reqs/60; i++ {
 		go SendRequest(url)
 	}
 }
@@ -44,7 +44,7 @@ func GetReqsPerMin() []int {
 	// 打开 reqs.csv 文件
 	file, err := os.Open("reqs.csv")
 	if err != nil {
-		log.Fatal(err)
+		l4g.Error("Error opening file: ", err)
 	}
 	defer file.Close()
 
@@ -59,13 +59,14 @@ func GetReqsPerMin() []int {
 			break
 		}
 		if err != nil {
-			log.Fatal(err)
+			l4g.Error("Error reading record: ", err)
 		}
 
 		// 解析 reqs 列的数值
 		req, err := strconv.Atoi(record[1])
 		if err != nil {
-			log.Fatal(err)
+			l4g.Error("Error parsing reqs: ", err)
+			continue
 		}
 		reqs = append(reqs, req)
 	}
