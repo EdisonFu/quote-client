@@ -12,6 +12,7 @@ func main() {
 
 	for _, reqs := range reqsList {
 		//每分钟发reqs个请求
-		services.SendRequestPerMin(reqs)
+		services.SendRequestPerMin(reqs, "auth_user")
+		services.SendRequestPerMin(reqs/2, "unauth_user")
 	}
 }

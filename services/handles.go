@@ -1,12 +1,7 @@
 package services
 
 import (
-	"encoding/csv"
-	l4g "github.com/alecthomas/log4go"
-	"io"
-	"os"
 	"paper/quote-client/utils"
-	"strconv"
 	"time"
 )
 
@@ -15,60 +10,28 @@ const (
 	URL = "http://0.0.0.0:8000"
 )
 
-func SendRequestPerMin(reqs int) {
+func SendRequestPerMin(reqs int, user string) {
 	//一分钟内，向URL发reqs个请求; 每次发送reqs/60个请求，然后sleep 1s，直至这分钟发完reqs个请求
 	//每次发送reqs/60个请求，每个请求间隔1s
 	for i := 0; i < 60; i++ {
 		if i == 59 {
-			go SendRequestOneTime(URL, reqs-reqs/60*59)
+			go SendRequestOneTime(URL, reqs-reqs/60*59, user)
 			break
 		}
-		go SendRequestOneTime(URL, reqs/60)
+		go SendRequestOneTime(URL, reqs/60, user)
 		time.Sleep(1 * time.Second)
 	}
 }
 
-func SendRequestOneTime(url string, reqs int) {
+func SendRequestOneTime(url string, reqs int, user string) {
 	for i := 0; i < reqs/60; i++ {
-		go SendRequest(url)
+		go SendRequest(url, user)
 	}
 }
 
-func SendRequest(url string) {
+func SendRequest(url, user string) {
+	header := make(map[string]string)
+	header[user] = user
 	//发送Get请求
-	utils.Get(url)
-}
-
-// 读取reqs.csv文件，获取每分钟请求数,并根据reqs列的数值，返回一个数组
-func GetReqsPerMin() []int {
-	// 打开 reqs.csv 文件
-	file, err := os.Open("reqs.csv")
-	if err != nil {
-		l4g.Error("Error opening file: ", err)
-	}
-	defer file.Close()
-
-	// 创建 CSV Reader
-	reader := csv.NewReader(file)
-
-	// 读取 CSV 数据行
-	var reqs []int
-	for {
-		record, err := reader.Read()
-		if err == io.EOF {
-			break
-		}
-		if err != nil {
-			l4g.Error("Error reading record: ", err)
-		}
-
-		// 解析 reqs 列的数值
-		req, err := strconv.Atoi(record[1])
-		if err != nil {
-			l4g.Error("Error parsing reqs: ", err)
-			continue
-		}
-		reqs = append(reqs, req)
-	}
-	return reqs
+	utils.Get(url, header)
 }

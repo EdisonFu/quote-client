@@ -9,13 +9,16 @@ import (
 	"time"
 )
 
-func Get(url string) []byte {
+func Get(url string, header map[string]string) []byte {
 	client := &http.Client{}
 	//提交请求
 	reqest, err := http.NewRequest("GET", url, nil)
 
 	//增加header选项
 	reqest.Header.Add("Content-Type", "application/json")
+	for k, v := range header {
+		reqest.Header.Add(k, v)
+	}
 
 	if err != nil {
 		panic(err)
